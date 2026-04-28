@@ -3,5 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": {}
+  "scripts": {
+    "generate": "orval --config ./orval.config.ts",
+    "typecheck": "tsc",
+    "format": "oxfmt",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@faker-js/faker": "latest",
+    "msw": "latest"
+  },
+  "devDependencies": {
+    "orval": "latest",
+    "oxfmt": "catalog:",
+    "type-fest": "catalog:",
+    "typescript": "latest",
+    "vitest": "catalog:"
+  }
 }
