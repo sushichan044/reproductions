@@ -1,11 +1,6 @@
 {
-  "include": ["generated/**/*.ts"],
+  "extends": "@virtual-live-lab/tsconfig/base",
   "compilerOptions": {
-    "strict": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "target": "ES2022",
-    "skipLibCheck": true,
-    "noEmit": true
+    "lib": ["ES2022", "DOM"]
   }
 }

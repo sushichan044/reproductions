@@ -7,17 +7,16 @@
     "generate": "orval --config ./orval.config.ts",
     "typecheck": "tsc",
     "format": "oxfmt",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "@faker-js/faker": "latest",
-    "msw": "latest"
+    "test": "vitest --typecheck"
   },
   "devDependencies": {
-    "orval": "latest",
+    "@faker-js/faker": "10.4.0",
+    "@virtual-live-lab/tsconfig": "catalog:",
+    "msw": "2.13.6",
+    "orval": "8.9.0",
     "oxfmt": "catalog:",
     "type-fest": "catalog:",
-    "typescript": "latest",
+    "typescript": "catalog:",
     "vitest": "catalog:"
   }
 }

@@ -39,11 +39,14 @@ The error would surface as soon as any code tries to assign an actual `(UnionPar
 
 ```bash
 pnpm install
-pnpm generate   # runs orval
-pnpm typecheck  # tsc — exits 0, but generated type is semantically wrong
+pnpm generate   # runs orval → generates incorrect type
+pnpm test       # vitest type-level test → fails with type mismatch
 ```
 
-Check `generated/repro.ts` line 17:
+`index.test.ts` asserts that `getOptionsResponse200["data"]` equals `Array<UnionPartOne & UnionPartTwo>`.
+The test fails because the generated type is `UnionPartOne & UnionPartTwo[]` instead.
+
+Check `generated/repro.ts`:
 
 ```ts
 data: UnionPartOne & UnionPartTwo[];
