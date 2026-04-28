@@ -2,3 +2,9 @@ packages:
   - "workspace/*"
 
 sharedWorkspaceLockfile: false
+
+catalog:
+  "@typescript/native-preview": "7.0.0-dev.20260428.1"
+  "@types/node": ^25.6.0
+  "@virtual-live-lab/tsconfig": ^2.1.21
+  tsx: ^4.21.0
