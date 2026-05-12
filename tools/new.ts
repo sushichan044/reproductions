@@ -30,7 +30,7 @@ async function main() {
     path.join(packageDirectory, "package.json"),
     JSON.stringify(createPackageJson(packageName), null, 2) + "\n",
   );
-  await writeFile(path.join(packageDirectory, "README.md"), `# ${packageName}\n`);
+  await writeFile(path.join(packageDirectory, "README.md"), createREADME(packageName));
 
   console.log(`Created ${path.join(workspaceDirectoryName, packageName)}`);
 }
@@ -88,6 +88,45 @@ function createPackageJson(packageName: string) {
     type: "module",
     scripts: {},
   };
+}
+
+function createREADME(packageName: string) {
+  return `
+# ${packageName}
+
+reproduction for \`TBD, fill after create the issue\`
+
+## How to reproduce
+
+1. Clone this repository
+
+   \`\`\`bash
+   git clone https://github.com/sushichan044/reproductions.git
+   cd reproductions
+   \`\`\`
+
+2. Install dependencies
+
+   \`\`\`bash
+   pnpm install
+   \`\`\`
+
+3. Run reproduction
+
+   \`\`\`bash
+   cd workspace/${packageName}
+   # run the command to reproduce the issue, e.g.:
+   # pnpm build
+   \`\`\`
+
+## Expected behavior
+
+TBD, fill after create the issue
+
+## Actual behavior
+
+TBD, fill after create the issue
+`.trimStart();
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
