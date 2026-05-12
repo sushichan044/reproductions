@@ -17,5 +17,5 @@
     "tsx": "catalog:",
     "ttsc": "0.4.4"
   },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@11.1.1"
 }
