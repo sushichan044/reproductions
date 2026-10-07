@@ -6,7 +6,7 @@ Reproduction for: **`createRoutesStub` cannot enable `useTransitions`, so compon
 
 - `react-router` 8.4.0
 - `react` / `react-dom` 19.3.0
-- `vitest` 4.1.11 with `jsdom` 30.1.2 and `@testing-library/react` 16.3.3
+- `vitest` 4.1.11 in browser mode (`@vitest/browser-playwright` 4.1.11, `playwright` 1.63.0, headless Chromium) with `vitest-browser-react` 2.3.0
 
 ## How to reproduce
 
@@ -15,7 +15,8 @@ git clone https://github.com/sushichan044/reproductions.git
 cd reproductions
 pnpm install
 cd workspace/react-router-routes-stub-use-transitions
-pnpm test       # vitest
+pnpm exec playwright install chromium  # one-time browser download
+pnpm test       # vitest browser mode
 pnpm typecheck  # tsc
 ```
 
@@ -23,7 +24,7 @@ pnpm typecheck  # tsc
 
 `Probe` renders a `SubmitButton`. Clicking it calls `startTransition(() => fetcher.submit({}, { method: "post", action: "/act" }))`.
 The `/act` action resolves after 50ms with `{ ok: false }`.
-A `useEffect` records every `fetcher.state` the component commits.
+A `useEffect` records every `fetcher.state` the component commits and renders the list in an `<output data-testid="states">` element, which the tests assert on in a real browser.
 
 ## Expected behavior
 

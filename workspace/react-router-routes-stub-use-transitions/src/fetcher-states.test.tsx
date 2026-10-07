@@ -1,112 +1,90 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { startTransition, useEffect } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { createMemoryRouter, createRoutesStub, useFetcher } from "react-router";
 import { RouterProvider } from "react-router/dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
+import { render } from "vitest-browser-react";
 
-// Needed so React treats `act` as available outside of a test framework hook.
-(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-
-afterEach(cleanup);
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const FULL_SEQUENCE = "idle,submitting,loading,idle";
 
 async function action() {
-  await sleep(50);
+  await new Promise((resolve) => setTimeout(resolve, 50));
   return { ok: false };
 }
 
-function Probe({ onState }: { onState: (state: string) => void }) {
+function Probe() {
   const fetcher = useFetcher();
+  const [states, setStates] = useState<string[]>([]);
 
+  // Record every `fetcher.state` this component commits.
   useEffect(() => {
-    onState(fetcher.state);
-  }, [fetcher.state, onState]);
+    setStates((prev) => (prev.at(-1) === fetcher.state ? prev : [...prev, fetcher.state]));
+  }, [fetcher.state]);
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        startTransition(() => fetcher.submit({}, { method: "post", action: "/act" }));
-      }}
-    >
-      SubmitButton
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          startTransition(() => fetcher.submit({}, { method: "post", action: "/act" }));
+        }}
+      >
+        SubmitButton
+      </button>
+      <output data-testid="states">{states.join(",")}</output>
+      <output data-testid="data">{JSON.stringify(fetcher.data ?? null)}</output>
+    </>
   );
 }
 
-/** Clicks the button and returns every `fetcher.state` the component committed. */
-async function clickAndRecord(renderApp: (onState: (state: string) => void) => void) {
-  const states: string[] = [];
-  const onState = (state: string) => {
-    // Collapse repeated commits of the same state.
-    if (states.at(-1) !== state) states.push(state);
-  };
+const routes = [
+  { path: "/", Component: Probe },
+  { path: "/act", action },
+];
 
-  renderApp(onState);
-
-  fireEvent.click(screen.getByText("SubmitButton"));
-  // Advance in small steps so intermediate commits are not batched away.
-  for (let i = 0; i < 30; i++) {
-    await act(async () => {
-      await sleep(10);
-    });
-  }
-
-  return states;
+function renderWithRouterProvider(useTransitions?: boolean) {
+  const router = createMemoryRouter(routes, { initialEntries: ["/"] });
+  return render(<RouterProvider router={router} useTransitions={useTransitions} />);
 }
 
-function renderWithRouterProvider(onState: (state: string) => void, useTransitions?: boolean) {
-  const router = createMemoryRouter(
-    [
-      { path: "/", element: <Probe onState={onState} /> },
-      { path: "/act", action },
-    ],
-    { initialEntries: ["/"] },
-  );
-  render(<RouterProvider router={router} useTransitions={useTransitions} />);
-}
-
-function renderWithRoutesStub(onState: (state: string) => void) {
-  const Stub = createRoutesStub([
-    { path: "/", Component: () => <Probe onState={onState} /> },
-    { path: "/act", action },
-  ]);
-  render(<Stub initialEntries={["/"]} />);
+/** Clicks the button, waits for the action result, and returns the recorded states element. */
+async function submitAndWait() {
+  await page.getByRole("button", { name: "SubmitButton" }).click();
+  await expect.element(page.getByTestId("data")).toHaveTextContent('{"ok":false}');
+  return page.getByTestId("states");
 }
 
 describe("fetcher.submit wrapped in startTransition", () => {
   it("commits `submitting` with <RouterProvider useTransitions>", async () => {
-    const states = await clickAndRecord((onState) => renderWithRouterProvider(onState, true));
+    await renderWithRouterProvider(true);
 
-    expect(states).toEqual(["idle", "submitting", "loading", "idle"]);
+    await expect.element(await submitAndWait()).toHaveTextContent(FULL_SEQUENCE);
   });
 
   it("does not commit `submitting` with <RouterProvider> without useTransitions", async () => {
-    const states = await clickAndRecord((onState) => renderWithRouterProvider(onState));
+    await renderWithRouterProvider();
 
-    expect(states).toEqual(["idle"]);
+    await expect.element(await submitAndWait()).toHaveTextContent(/^idle$/);
   });
 
   // `createRoutesStub` has no way to pass `useTransitions`, so it behaves like the
   // case above. `it.fails` passes while the assertion below fails. When the stub
   // gains the prop, this test starts "failing" and should become a plain `it`.
   it.fails("commits `submitting` with createRoutesStub (missing capability)", async () => {
-    const states = await clickAndRecord(renderWithRoutesStub);
+    const Stub = createRoutesStub(routes);
+    await render(<Stub initialEntries={["/"]} />);
 
-    expect(states).toEqual(["idle", "submitting", "loading", "idle"]);
+    const states = await submitAndWait();
+
+    // A short poll timeout keeps this expected failure from waiting for the 15s default.
+    await expect.poll(() => states.element().textContent, { timeout: 1000 }).toBe(FULL_SEQUENCE);
   });
 
   it("ignores a `useTransitions` prop passed to the createRoutesStub component", async () => {
-    const states = await clickAndRecord((onState) => {
-      const Stub = createRoutesStub([
-        { path: "/", Component: () => <Probe onState={onState} /> },
-        { path: "/act", action },
-      ]);
-      // @ts-expect-error `useTransitions` does not exist on `RoutesTestStubProps`.
-      render(<Stub initialEntries={["/"]} useTransitions />);
-    });
+    const Stub = createRoutesStub(routes);
+    // @ts-expect-error `useTransitions` does not exist on `RoutesTestStubProps`.
+    await render(<Stub initialEntries={["/"]} useTransitions />);
 
-    expect(states).toEqual(["idle"]);
+    await expect.element(await submitAndWait()).toHaveTextContent(/^idle$/);
   });
 });
