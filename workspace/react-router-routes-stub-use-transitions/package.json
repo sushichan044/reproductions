@@ -1,0 +1,26 @@
+{
+  "name": "react-router-routes-stub-use-transitions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc",
+    "format": "oxfmt",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router": "8.4.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@virtual-live-lab/tsconfig": "catalog:",
+    "jsdom": "30.1.2",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
